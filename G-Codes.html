@@ -1765,6 +1765,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    [print_stats]
+  </a>
+  
+    <nav class="md-nav" aria-label="[print_stats]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_print_stats_info" class="md-nav__link">
+    SET_PRINT_STATS_INFO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#probe" class="md-nav__link">
     [probe]
   </a>
@@ -3808,6 +3828,26 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#print_stats" class="md-nav__link">
+    [print_stats]
+  </a>
+  
+    <nav class="md-nav" aria-label="[print_stats]">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#set_print_stats_info" class="md-nav__link">
+    SET_PRINT_STATS_INFO
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#probe" class="md-nav__link">
     [probe]
   </a>
@@ -4783,8 +4823,9 @@ clears any error state from the micro-controller.</p>
 <a href="Config_Reference.html#gcode_arcs">gcode_arcs config section</a> is
 enabled:</p>
 <ul>
-<li>Controlled Arc Move (G2 or G3): <code>G2 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;]
-  [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;</code></li>
+<li>Arc Move Clockwise (G2), Arc Move Counter-clockwise (G3): <code>G2|G3 [X&lt;pos&gt;] [Y&lt;pos&gt;] [Z&lt;pos&gt;]
+  [E&lt;pos&gt;] [F&lt;speed&gt;] I&lt;value&gt; J&lt;value&gt;|I&lt;value&gt; K&lt;value&gt;|J&lt;value&gt; K&lt;value&gt;</code></li>
+<li>Arc Plane Select: G17 (XY plane), G18 (XZ plane), G19 (YZ plane)</li>
 </ul>
 <h3 id="gcode_macro">[gcode_macro]<a class="headerlink" href="#gcode_macro" title="Permanent link">&para;</a></h3>
 <p>The following command is available when a
@@ -4999,9 +5040,16 @@ commands to manage the LED's color settings).</p>
 <a href="Config_Reference.html#output_pin">output_pin config section</a> is
 enabled.</p>
 <h4 id="set_pin">SET_PIN<a class="headerlink" href="#set_pin" title="Permanent link">&para;</a></h4>
-<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; CYCLE_TIME=&lt;cycle_time&gt;</code>:
-Note - hardware PWM does not currently support the CYCLE_TIME
-parameter and will use the cycle time defined in the config.</p>
+<p><code>SET_PIN PIN=config_name VALUE=&lt;value&gt; [CYCLE_TIME=&lt;cycle_time&gt;]</code>: Set
+the pin to the given output <code>VALUE</code>. VALUE should be 0 or 1 for
+"digital" output pins. For PWM pins, set to a value between 0.0 and
+1.0, or between 0.0 and <code>scale</code> if a scale is configured in the
+output_pin config section.</p>
+<p>Some pins (currently only "soft PWM" pins) support setting an explicit
+cycle time using the CYCLE_TIME parameter (specified in seconds). Note
+that the CYCLE_TIME parameter is not stored between SET_PIN commands
+(any SET_PIN command without an explicit CYCLE_TIME parameter will use
+the <code>cycle_time</code> specified in the output_pin config section).</p>
 <h3 id="palette2">[palette2]<a class="headerlink" href="#palette2" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when the
 <a href="Config_Reference.html#palette2">palette2 config section</a> is enabled.</p>
@@ -5060,6 +5108,15 @@ PAUSE. It is recommended to add this to your start gcode to make sure
 the paused state is fresh for each print.</p>
 <h4 id="cancel_print">CANCEL_PRINT<a class="headerlink" href="#cancel_print" title="Permanent link">&para;</a></h4>
 <p><code>CANCEL_PRINT</code>: Cancels the current print.</p>
+<h3 id="print_stats">[print_stats]<a class="headerlink" href="#print_stats" title="Permanent link">&para;</a></h3>
+<p>The print_stats module is automatically loaded.</p>
+<h4 id="set_print_stats_info">SET_PRINT_STATS_INFO<a class="headerlink" href="#set_print_stats_info" title="Permanent link">&para;</a></h4>
+<p><code>SET_PRINT_STATS_INFO [TOTAL_LAYER=&lt;total_layer_count&gt;] [CURRENT_LAYER=
+&lt;current_layer&gt;]</code>: Pass slicer info like layer act and total to Klipper.
+Add <code>SET_PRINT_STATS_INFO [TOTAL_LAYER=&lt;total_layer_count&gt;]</code> to your
+slicer start gcode section and <code>SET_PRINT_STATS_INFO [CURRENT_LAYER=
+&lt;current_layer&gt;]</code> at the layer change gcode section to pass layer
+information from your slicer to Klipper.</p>
 <h3 id="probe">[probe]<a class="headerlink" href="#probe" title="Permanent link">&para;</a></h3>
 <p>The following commands are available when a
 <a href="Config_Reference.html#probe">probe config section</a> or
@@ -5327,7 +5384,10 @@ turned off then back on.</p>
 <h4 id="set_tmc_current">SET_TMC_CURRENT<a class="headerlink" href="#set_tmc_current" title="Permanent link">&para;</a></h4>
 <p><code>SET_TMC_CURRENT STEPPER=&lt;name&gt; CURRENT=&lt;amps&gt; HOLDCURRENT=&lt;amps&gt;</code>:
 This will adjust the run and hold currents of the TMC driver.
-(HOLDCURRENT is not applicable to tmc2660 drivers.)</p>
+<code>HOLDCURRENT</code> is not applicable to tmc2660 drivers.
+When used on a driver which has the <code>globalscaler</code> field (tmc5160 and tmc2240),
+if StealthChop2 is used, the stepper must be held at standstill for &gt;130ms so
+that the driver executes the AT#1 calibration.</p>
 <h4 id="set_tmc_field">SET_TMC_FIELD<a class="headerlink" href="#set_tmc_field" title="Permanent link">&para;</a></h4>
 <p><code>SET_TMC_FIELD STEPPER=&lt;name&gt; FIELD=&lt;field&gt; VALUE=&lt;value&gt;</code>: This will
 alter the value of the specified register field of the TMC driver.
